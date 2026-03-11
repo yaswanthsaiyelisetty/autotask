@@ -13,7 +13,6 @@ export default function AIInput({ onTaskCreated }) {
 
     setLoading(true);
     try {
-      // Step 1: Parse with AI
       const parseRes = await aiAPI.parse(message);
       const tasks = parseRes.data.tasks;
 
@@ -22,7 +21,6 @@ export default function AIInput({ onTaskCreated }) {
         return;
       }
 
-      // Step 2: Create each task
       for (const t of tasks) {
         await taskAPI.create({
           task: t.task,
@@ -47,13 +45,20 @@ export default function AIInput({ onTaskCreated }) {
   };
 
   return (
-    <div className="bg-dark-800 rounded-xl p-5 border border-dark-700">
-      <div className="flex items-center gap-2 mb-3">
-        <FiZap className="text-primary-400" />
-        <h3 className="text-sm font-semibold text-white">AI Quick Add</h3>
-        <span className="text-xs text-dark-500">
-          Type naturally and AI creates tasks for you
-        </span>
+    <div className="glass rounded-2xl p-6 relative overflow-hidden">
+      {/* Decorative accent */}
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary-500/20 to-transparent" />
+
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500/15 to-accent-500/15 flex items-center justify-center border border-primary-500/10">
+          <FiZap className="text-primary-400 text-sm" />
+        </div>
+        <div>
+          <h3 className="text-sm font-serif font-semibold text-white tracking-wide">AI Quick Add</h3>
+          <span className="text-[11px] text-dark-600 hidden sm:block">
+            Type naturally &mdash; AI creates tasks for you
+          </span>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-3">
@@ -62,18 +67,18 @@ export default function AIInput({ onTaskCreated }) {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="e.g. Remind me to submit project on March 15 at 10 AM"
-          className="flex-1 px-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:border-primary-500 transition"
+          className="flex-1 px-5 py-3.5 bg-dark-900/50 border border-white/[0.05] rounded-2xl text-white placeholder-dark-600 focus:outline-none focus:border-primary-500/30 transition-gpu text-sm"
           disabled={loading}
         />
         <button
           type="submit"
           disabled={loading || !message.trim()}
-          className="px-5 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="btn-shine px-5 sm:px-6 py-3.5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-medium rounded-2xl transition-gpu disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2.5 shadow-glow-sm hover:shadow-glow-md text-sm"
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
-            <FiSend />
+            <FiSend className="text-sm" />
           )}
         </button>
       </form>

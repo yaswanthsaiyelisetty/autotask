@@ -3,7 +3,7 @@ import { taskAPI } from '../services/api';
 import TaskForm from '../components/TaskForm';
 import TaskCard from '../components/TaskCard';
 import toast from 'react-hot-toast';
-import { FiPlus, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiFilter, FiInbox } from 'react-icons/fi';
 
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
@@ -79,33 +79,39 @@ export default function Tasks() {
     setShowForm(true);
   };
 
+  const selectCls =
+    'bg-dark-900/50 border border-white/[0.05] text-white rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-primary-500/30 transition-gpu';
+
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Tasks</h1>
-          <p className="text-dark-400 mt-1">Manage all your tasks</p>
+          <p className="text-accent-400 text-[11px] font-semibold uppercase tracking-[0.2em] mb-2">Manage</p>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-tight">Tasks</h1>
+          <p className="text-dark-500 mt-1.5 text-sm font-light">Organize and track your work</p>
         </div>
         <button
           onClick={() => {
             setEditingTask(null);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition"
+          className="btn-shine flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-medium rounded-2xl transition-gpu shadow-glow-sm hover:shadow-glow-md text-sm"
         >
-          <FiPlus /> New Task
+          <FiPlus className="text-sm" /> New Task
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <FiFilter className="text-dark-400" />
+      <div className="flex gap-3 flex-wrap items-center">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-dark-800/50 flex items-center justify-center border border-white/[0.04]">
+            <FiFilter className="text-dark-500 text-xs" />
+          </div>
           <select
             value={filter.status}
             onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-            className="bg-dark-800 border border-dark-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-500"
+            className={selectCls}
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -116,7 +122,7 @@ export default function Tasks() {
         <select
           value={filter.priority}
           onChange={(e) => setFilter({ ...filter, priority: e.target.value })}
-          className="bg-dark-800 border border-dark-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-500"
+          className={selectCls}
         >
           <option value="">All Priority</option>
           <option value="high">High</option>
@@ -139,18 +145,22 @@ export default function Tasks() {
 
       {/* Task List */}
       {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex items-center justify-center h-40">
+          <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
         </div>
       ) : tasks.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-dark-400 text-lg">No tasks found</p>
-          <p className="text-dark-500 text-sm mt-1">
-            Create your first task to get started!
+        <div className="glass rounded-2xl p-14 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[1px] bg-gradient-to-r from-transparent via-primary-500/20 to-transparent" />
+          <div className="w-16 h-16 rounded-2xl bg-dark-800/50 flex items-center justify-center mx-auto mb-5 border border-white/[0.04]">
+            <FiInbox className="text-dark-600 text-2xl" />
+          </div>
+          <p className="text-dark-400 font-serif font-medium text-lg">No tasks found</p>
+          <p className="text-dark-600 text-sm mt-2 font-light">
+            Create your first task to get started
           </p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {tasks.map((task) => (
             <TaskCard
               key={task._id}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff, FiZap, FiArrowRight } from 'react-icons/fi';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -32,121 +32,170 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md animate-fadeIn">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-white">
-            Auto<span className="text-primary-500">Task</span>
-          </h1>
-          <p className="text-dark-400 mt-2">Create your account</p>
-        </div>
+    <div className="min-h-screen flex bg-dark-950">
+      {/* Left — Premium branding panel */}
+      <div className="hidden lg:flex lg:w-[520px] xl:w-[580px] relative overflow-hidden auth-bg">
+        <div className="absolute top-16 left-8 w-80 h-80 bg-primary-600/15 rounded-full blur-[120px] animate-pulse-soft" />
+        <div className="absolute bottom-24 right-0 w-64 h-64 bg-accent-400/8 rounded-full blur-[100px] animate-float" />
+        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-primary-400/10 rounded-full blur-[80px]" />
 
-        {/* Card */}
-        <div className="bg-dark-800 rounded-2xl p-8 shadow-xl border border-dark-700">
-          <h2 className="text-2xl font-bold text-white mb-6">Sign up</h2>
+        {/* Decorative grid */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(rgba(139,92,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.3) 1px, transparent 1px)',
+          backgroundSize: '60px 60px'
+        }} />
+
+        <div className="relative z-10 flex flex-col justify-between p-14 w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary-500 via-primary-600 to-accent-500 flex items-center justify-center shadow-glow-sm">
+              <FiZap className="text-white text-xl" />
+            </div>
+            <span className="text-xl font-semibold text-white tracking-tight font-serif">AutoTask</span>
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <p className="text-accent-400 text-xs font-semibold uppercase tracking-[0.2em] mb-4">Begin Your Journey</p>
+              <h2 className="text-5xl xl:text-6xl font-serif font-bold text-white leading-[1.1] tracking-tight">
+                Start managing
+                <br />
+                <span className="text-gradient italic">smarter today</span>
+              </h2>
+            </div>
+            <p className="text-dark-400 text-base leading-relaxed max-w-sm font-light">
+              Create your free account and let AI handle your task scheduling and reminders effortlessly.
+            </p>
+            <div className="elegant-divider w-20" />
+          </div>
+
+          <p className="text-dark-600 text-[11px] tracking-wide">&copy; 2026 AutoTask &mdash; Built with AI</p>
+        </div>
+      </div>
+
+      {/* Right — Form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 relative">
+        <div className="absolute top-1/4 right-1/4 w-60 h-60 bg-primary-600/[0.04] rounded-full blur-[100px]" />
+
+        <div className="w-full max-w-[420px] animate-fade-in-up relative z-10">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-12">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 via-primary-600 to-accent-500 flex items-center justify-center shadow-glow-sm">
+                <FiZap className="text-white text-lg" />
+              </div>
+              <span className="text-2xl font-serif font-bold text-white">AutoTask</span>
+            </div>
+            <p className="text-dark-500 text-sm">Create your account</p>
+          </div>
+
+          <div className="mb-10">
+            <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Create account</h2>
+            <p className="text-dark-500 mt-2 text-sm font-light">Get started for free &mdash; no credit card needed</p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-dark-300 mb-1.5">
+              <label className="block text-[11px] font-medium text-dark-400 mb-2.5 uppercase tracking-[0.15em]">
                 Full Name
               </label>
-              <div className="relative">
-                <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400" />
+              <div className="relative group">
+                <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 text-sm group-focus-within:text-primary-400 transition-colors duration-300" />
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition"
-                  placeholder="Yash"
+                  className="w-full pl-11 pr-4 py-3.5 bg-dark-900/60 border border-dark-700/50 rounded-2xl text-white placeholder-dark-600 focus:outline-none focus:border-primary-500/40 transition-gpu text-sm"
+                  placeholder="Your name"
                 />
               </div>
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                Email
+              <label className="block text-[11px] font-medium text-dark-400 mb-2.5 uppercase tracking-[0.15em]">
+                Email Address
               </label>
-              <div className="relative">
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400" />
+              <div className="relative group">
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 text-sm group-focus-within:text-primary-400 transition-colors duration-300" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition"
+                  className="w-full pl-11 pr-4 py-3.5 bg-dark-900/60 border border-dark-700/50 rounded-2xl text-white placeholder-dark-600 focus:outline-none focus:border-primary-500/40 transition-gpu text-sm"
                   placeholder="you@example.com"
                 />
               </div>
             </div>
 
-            {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                Phone (WhatsApp)
+              <label className="block text-[11px] font-medium text-dark-400 mb-2.5 uppercase tracking-[0.15em]">
+                WhatsApp Number
               </label>
-              <div className="relative">
-                <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400" />
+              <div className="relative group">
+                <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 text-sm group-focus-within:text-primary-400 transition-colors duration-300" />
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition"
+                  className="w-full pl-11 pr-4 py-3.5 bg-dark-900/60 border border-dark-700/50 rounded-2xl text-white placeholder-dark-600 focus:outline-none focus:border-primary-500/40 transition-gpu text-sm"
                   placeholder="+919876543210"
                 />
               </div>
-              <p className="text-xs text-dark-500 mt-1">
+              <p className="text-[11px] text-dark-600 mt-2 pl-1 font-light">
                 Include country code for WhatsApp reminders
               </p>
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-dark-300 mb-1.5">
+              <label className="block text-[11px] font-medium text-dark-400 mb-2.5 uppercase tracking-[0.15em]">
                 Password
               </label>
-              <div className="relative">
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400" />
+              <div className="relative group">
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 text-sm group-focus-within:text-primary-400 transition-colors duration-300" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-dark-900 border border-dark-600 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition"
-                  placeholder="••••••••"
+                  className="w-full pl-11 pr-12 py-3.5 bg-dark-900/60 border border-dark-700/50 rounded-2xl text-white placeholder-dark-600 focus:outline-none focus:border-primary-500/40 transition-gpu text-sm"
+                  placeholder="Min 6 characters"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-white transition"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-500 hover:text-dark-300 transition-colors duration-300"
                 >
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                  {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-shine w-full py-3.5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-2xl transition-gpu disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 shadow-glow-sm hover:shadow-glow-md text-sm mt-2"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Create Account
+                  <FiArrowRight className="text-sm" />
+                </>
+              )}
             </button>
           </form>
 
-          <p className="text-center text-dark-400 mt-6">
-            Already have an account?{' '}
-            <Link
-              to="/login"
-              className="text-primary-400 hover:text-primary-300 font-medium"
-            >
-              Sign in
-            </Link>
-          </p>
+          <div className="mt-10 text-center">
+            <div className="elegant-divider mb-6" />
+            <p className="text-dark-500 text-sm">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary-400 hover:text-accent-400 font-medium transition-colors duration-300">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

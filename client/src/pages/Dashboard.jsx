@@ -62,21 +62,24 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Header */}
+    <div className="space-y-10 animate-fade-in-up">
+      {/* Hero Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">
-          {greeting()}, {user?.name?.split(' ')[0]} 👋
+        <p className="text-accent-400 text-[11px] font-semibold uppercase tracking-[0.2em] mb-3">Dashboard</p>
+        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-tight leading-tight">
+          {greeting()},{' '}
+          <span className="text-gradient italic">{user?.name?.split(' ')[0]}</span>
         </h1>
-        <p className="text-dark-400 mt-1">
+        <p className="text-dark-500 mt-2 text-sm font-light">
           Here's what's happening with your tasks today.
         </p>
+        <div className="elegant-divider w-16 mt-4" />
       </div>
 
       {/* Stats */}

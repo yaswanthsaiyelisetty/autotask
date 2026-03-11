@@ -29,7 +29,15 @@ exports.signup = async (req, res, next) => {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    const user = await User.create({ name, email, password, phone: normalizePhone(phone) });
+    const normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone) {
+      const phoneInUse = await User.findOne({ phone: normalizedPhone });
+      if (phoneInUse) {
+        return res.status(400).json({ message: 'This phone number is already linked to another account' });
+      }
+    }
+
+    const user = await User.create({ name, email, password, phone: normalizedPhone });
 
     const token = generateToken(user._id);
 
@@ -100,9 +108,17 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const { name, phone } = req.body;
 
+    const normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone) {
+      const phoneInUse = await User.findOne({ phone: normalizedPhone, _id: { $ne: req.user._id } });
+      if (phoneInUse) {
+        return res.status(400).json({ message: 'This phone number is already linked to another account' });
+      }
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { name, phone: normalizePhone(phone) },
+      { name, phone: normalizedPhone },
       { new: true, runValidators: true }
     );
 
