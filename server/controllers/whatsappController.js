@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Task = require('../models/Task');
 const { parseTaskMessage } = require('../services/aiService');
+const { getDateTimeParts } = require('../utils/dateTime');
 const {
   sendWhatsAppMessage,
 } = require('../services/twilioService');
@@ -47,7 +48,8 @@ exports.handleIncoming = async (req, res, next) => {
     }
 
     // Use AI to parse the message into tasks
-    const parsed = await parseTaskMessage(message);
+    const { date: today } = getDateTimeParts(user.timezone);
+    const parsed = await parseTaskMessage(message, user.timezone);
 
     if (!parsed.tasks || parsed.tasks.length === 0) {
       await sendWhatsAppMessage(
@@ -63,7 +65,7 @@ exports.handleIncoming = async (req, res, next) => {
       const newTask = await Task.create({
         userId: user._id,
         task: t.task,
-        date: t.date || new Date().toISOString().split('T')[0],
+        date: t.date || today,
         time: t.time,
         repeat: t.repeat || 'none',
         repeatDay: t.repeatDay || null,

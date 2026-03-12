@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -44,9 +45,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ── Production: serve React build ──
-if (isProduction) {
-  const clientBuild = path.join(__dirname, '..', 'client', 'dist');
+// Serve the client build only when it exists on disk.
+const clientBuild = path.join(__dirname, '..', 'client', 'dist');
+if (isProduction && fs.existsSync(clientBuild)) {
   app.use(express.static(clientBuild));
   app.get('*', (req, res) => {
     res.sendFile(path.join(clientBuild, 'index.html'));

@@ -1,4 +1,5 @@
 const Task = require('../models/Task');
+const { getDateTimeParts } = require('../utils/dateTime');
 
 // GET /api/tasks
 exports.getTasks = async (req, res, next) => {
@@ -23,9 +24,7 @@ exports.getTasks = async (req, res, next) => {
 // GET /api/tasks/today
 exports.getTodayTasks = async (req, res, next) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    const dayOfMonth = String(new Date().getDate());
+    const { date: today, dayName, dayOfMonth } = getDateTimeParts(req.user.timezone);
 
     const tasks = await Task.find({
       userId: req.user._id,
@@ -48,11 +47,12 @@ exports.getTodayTasks = async (req, res, next) => {
 exports.createTask = async (req, res, next) => {
   try {
     const { task, date, time, repeat, repeatDay, priority } = req.body;
+    const { date: today } = getDateTimeParts(req.user.timezone);
 
     const newTask = await Task.create({
       userId: req.user._id,
       task,
-      date: date || new Date().toISOString().split('T')[0],
+      date: date || today,
       time,
       repeat: repeat || 'none',
       repeatDay: repeatDay || null,

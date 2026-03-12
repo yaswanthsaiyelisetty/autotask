@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const { DEFAULT_TIMEZONE, getDateTimeParts, resolveTimeZone } = require('../utils/dateTime');
 
 // NVIDIA AI (OpenAI-compatible endpoint)
 const client = new OpenAI({
@@ -8,12 +9,119 @@ const client = new OpenAI({
 
 const AI_MODEL = 'qwen/qwen2.5-coder-32b-instruct';
 
+const NON_TASK_PATTERNS = [
+  /^(hi|hii|hiii|hello|hlo|hey)\b[\s!.?]*$/i,
+  /^(ok|okay|kk|thanks|thank you|thx|yes|no|yep|nope)\b[\s!.?]*$/i,
+  /^(today|todays|to\s*day)\s+(date|day)\s+(is|=)\s+\d{1,2}\b/i,
+  /^(date|day)\s+(is|=)\s+\d{1,2}\b/i,
+  /^(it'?s|it is)\s+\d{1,2}\s+(today|now)\b/i,
+];
+
+const IGNORED_TASK_TOKENS = new Set([
+  'a',
+  'about',
+  'am',
+  'an',
+  'at',
+  'date',
+  'day',
+  'daily',
+  'every',
+  'for',
+  'in',
+  'is',
+  'me',
+  'month',
+  'morning',
+  'mrng',
+  'my',
+  'night',
+  'of',
+  'on',
+  'pm',
+  'please',
+  'remind',
+  'reminder',
+  'schedule',
+  'task',
+  'the',
+  'this',
+  'to',
+  'today',
+  'todays',
+  'tomorrow',
+  'tomrw',
+  'tmrw',
+  'week',
+  'you',
+]);
+
+function isClearlyNonTaskMessage(message) {
+  return NON_TASK_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+function hasMeaningfulTaskContent(taskName) {
+  const tokens = taskName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  return tokens.some(
+    (token) => !IGNORED_TASK_TOKENS.has(token) && !/^\d+$/.test(token) && token.length > 1
+  );
+}
+
+function normalizeParsedTask(task, fallbackDate) {
+  if (!task || typeof task.task !== 'string') {
+    return null;
+  }
+
+  const taskName = task.task.replace(/\s+/g, ' ').trim();
+  if (!taskName || !hasMeaningfulTaskContent(taskName)) {
+    return null;
+  }
+
+  const normalizedTime =
+    typeof task.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(task.time)
+      ? task.time
+      : '09:00';
+
+  const normalizedDate =
+    typeof task.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(task.date)
+      ? task.date
+      : fallbackDate;
+
+  const normalizedPriority = ['low', 'medium', 'high'].includes(task.priority)
+    ? task.priority
+    : 'medium';
+
+  const normalizedRepeat = ['none', 'daily', 'weekly', 'monthly'].includes(task.repeat)
+    ? task.repeat
+    : 'none';
+
+  return {
+    task: taskName,
+    date: normalizedDate,
+    time: normalizedTime,
+    priority: normalizedPriority,
+    repeat: normalizedRepeat,
+    repeatDay: normalizedRepeat === 'none' ? null : task.repeatDay || null,
+  };
+}
+
 /**
  * Parse a natural language message into structured task data.
  * Returns: { tasks: [{ task, date, time, priority }] }
  */
-async function parseTaskMessage(message) {
-  const today = new Date().toISOString().split('T')[0];
+async function parseTaskMessage(message, timeZone = DEFAULT_TIMEZONE) {
+  const trimmedMessage = message.trim();
+  if (!trimmedMessage || isClearlyNonTaskMessage(trimmedMessage)) {
+    return { tasks: [] };
+  }
+
+  const safeTimeZone = resolveTimeZone(timeZone);
+  const { date: today, time: currentTime, dayName } = getDateTimeParts(safeTimeZone);
 
   const completion = await client.chat.completions.create({
     model: AI_MODEL,
@@ -24,12 +132,15 @@ async function parseTaskMessage(message) {
     messages: [
       {
         role: 'system',
-        content: `You are a task extraction assistant. Today's date is ${today}.
+        content: `You are a task extraction assistant. The user's timezone is ${safeTimeZone}. Today's local date is ${today}, the local time is ${currentTime}, and the local weekday is ${dayName}.
 Extract tasks from the user's message and return valid JSON only. No explanation, no thinking, just JSON.
 
 Rules:
 - Return an array of task objects.
 - Each object must have: task (string), date (YYYY-MM-DD or null), time (HH:mm 24-hour), priority ("low"|"medium"|"high").
+      - If the message is not clearly asking to create or update a task/reminder, return { "tasks": [] }.
+      - Greetings, acknowledgements, date corrections, and statements about what today's date is are not tasks.
+      - The task field must contain only the actionable activity, not date/time chatter or correction text.
 - If the user says "tomorrow", calculate the actual date.
 - If the user says "every day", set repeat to "daily". For "every Monday" set repeat to "weekly" and repeatDay to "Monday". For "every month on 1st" set repeat to "monthly" and repeatDay to "1".
 - If no repeat is mentioned, set repeat to "none" and repeatDay to null.
@@ -42,7 +153,7 @@ Return ONLY this JSON format, nothing else:
       },
       {
         role: 'user',
-        content: message,
+        content: trimmedMessage,
       },
     ],
   });
@@ -52,7 +163,15 @@ Return ONLY this JSON format, nothing else:
   content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
   // Strip markdown code fences if present
   const jsonStr = content.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
-  return JSON.parse(jsonStr);
+  const parsed = JSON.parse(jsonStr);
+
+  return {
+    tasks: Array.isArray(parsed.tasks)
+      ? parsed.tasks
+          .map((task) => normalizeParsedTask(task, today))
+          .filter(Boolean)
+      : [],
+  };
 }
 
 /**

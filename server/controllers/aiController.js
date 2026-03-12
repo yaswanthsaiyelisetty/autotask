@@ -9,7 +9,7 @@ exports.parseMessage = async (req, res, next) => {
       return res.status(400).json({ message: 'Message is required' });
     }
 
-    const result = await parseTaskMessage(message);
+    const result = await parseTaskMessage(message, req.user.timezone);
 
     res.json(result);
   } catch (error) {

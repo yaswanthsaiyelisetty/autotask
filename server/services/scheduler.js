@@ -7,63 +7,56 @@ const {
   buildDailyScheduleMessage,
 } = require('./twilioService');
 const { generateDailySchedule } = require('./aiService');
+const { getDateTimeParts } = require('../utils/dateTime');
 
 /**
- * Get today's date string and current time (HH:mm).
+ * Build the current date/time context in a user's timezone.
  */
-function getNow() {
-  const now = new Date();
-  const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const time = `${hours}:${minutes}`;
-  const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }); // Monday, Tuesday...
-  const dayOfMonth = String(now.getDate()); // 1-31
-  return { date, time, dayName, dayOfMonth };
+function getNow(timeZone) {
+  return getDateTimeParts(timeZone);
 }
 
 /**
  * Find all tasks that need a reminder right now.
  */
 async function findDueTasks() {
-  const { date, time, dayName, dayOfMonth } = getNow();
+  const users = await User.find({ phone: { $ne: '' } }, '_id timezone');
+  const dueTasks = [];
 
-  // One-time tasks for today
-  const oneTimeTasks = await Task.find({
-    status: 'pending',
-    reminderSent: false,
-    repeat: 'none',
-    date,
-    time,
-  });
+  for (const user of users) {
+    const { date, time, dayName, dayOfMonth } = getNow(user.timezone);
 
-  // Daily recurring tasks
-  const dailyTasks = await Task.find({
-    status: 'pending',
-    repeat: 'daily',
-    time,
-    $or: [{ lastReminderDate: { $ne: date } }, { lastReminderDate: null }],
-  });
+    const userTasks = await Task.find({
+      userId: user._id,
+      status: 'pending',
+      time,
+      $or: [
+        {
+          repeat: 'none',
+          reminderSent: false,
+          date,
+        },
+        {
+          repeat: 'daily',
+          $or: [{ lastReminderDate: { $ne: date } }, { lastReminderDate: null }],
+        },
+        {
+          repeat: 'weekly',
+          repeatDay: dayName,
+          $or: [{ lastReminderDate: { $ne: date } }, { lastReminderDate: null }],
+        },
+        {
+          repeat: 'monthly',
+          repeatDay: dayOfMonth,
+          $or: [{ lastReminderDate: { $ne: date } }, { lastReminderDate: null }],
+        },
+      ],
+    });
 
-  // Weekly recurring tasks
-  const weeklyTasks = await Task.find({
-    status: 'pending',
-    repeat: 'weekly',
-    repeatDay: dayName,
-    time,
-    $or: [{ lastReminderDate: { $ne: date } }, { lastReminderDate: null }],
-  });
+    dueTasks.push(...userTasks);
+  }
 
-  // Monthly recurring tasks
-  const monthlyTasks = await Task.find({
-    status: 'pending',
-    repeat: 'monthly',
-    repeatDay: dayOfMonth,
-    time,
-    $or: [{ lastReminderDate: { $ne: date } }, { lastReminderDate: null }],
-  });
-
-  return [...oneTimeTasks, ...dailyTasks, ...weeklyTasks, ...monthlyTasks];
+  return dueTasks;
 }
 
 /**
@@ -72,11 +65,12 @@ async function findDueTasks() {
 async function processReminders() {
   try {
     const dueTasks = await findDueTasks();
-    const { date } = getNow();
 
     for (const task of dueTasks) {
       const user = await User.findById(task.userId);
       if (!user || !user.phone) continue;
+
+      const { date } = getNow(user.timezone);
 
       const message = buildReminderMessage(task);
 
