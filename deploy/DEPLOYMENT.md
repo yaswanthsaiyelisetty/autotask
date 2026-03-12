@@ -150,7 +150,7 @@ AZURE_COSMOS=true
 JWT_SECRET=<generate-a-random-64-char-string>
 JWT_EXPIRES_IN=7d
 
-OPENAI_API_KEY=sk-your-openai-key
+NVIDIA_API_KEY=nvapi-your-nvidia-api-key
 TWILIO_ACCOUNT_SID=AC-your-sid
 TWILIO_AUTH_TOKEN=your-auth-token
 TWILIO_WHATSAPP_NUMBER=+14155238886
