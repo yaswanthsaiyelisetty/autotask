@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Task = require('../models/Task');
 const { parseTaskMessage } = require('../services/aiService');
 const { getDateTimeParts } = require('../utils/dateTime');
+const { getRecurrenceLabel } = require('../services/recurrenceService');
 const {
   sendWhatsAppMessage,
 } = require('../services/twilioService');
@@ -28,10 +29,11 @@ exports.handleIncoming = async (req, res, next) => {
 
     // Handle "done" replies to mark tasks completed
     if (message.toLowerCase() === 'done') {
+      const { date: today } = getDateTimeParts(user.timezone);
       const latestPending = await Task.findOne({
         userId: user._id,
         status: 'pending',
-        reminderSent: true,
+        $or: [{ reminderSent: true }, { lastReminderDate: today }],
       }).sort({ updatedAt: -1 });
 
       if (latestPending) {
@@ -62,13 +64,16 @@ exports.handleIncoming = async (req, res, next) => {
     const createdTasks = [];
 
     for (const t of parsed.tasks) {
+      const effectiveDate = t.date || t.recurrence?.startDate || today;
       const newTask = await Task.create({
         userId: user._id,
         task: t.task,
-        date: t.date || today,
+        date: effectiveDate,
         time: t.time,
         repeat: t.repeat || 'none',
         repeatDay: t.repeatDay || null,
+        recurrence: t.recurrence,
+        exceptions: t.exceptions,
         priority: t.priority || 'medium',
         source: 'whatsapp',
       });
@@ -82,7 +87,8 @@ exports.handleIncoming = async (req, res, next) => {
         t.priority === 'high' ? '⚠️' : t.priority === 'medium' ? '🔔' : '📋';
       reply += `${i + 1}. ${priorityEmoji} *${t.task}*\n`;
       reply += `   📅 ${t.date} ⏰ ${t.time}\n`;
-      if (t.repeat !== 'none') reply += `   🔁 ${t.repeat}\n`;
+      const recurrenceLabel = getRecurrenceLabel(t);
+      if (recurrenceLabel) reply += `   🔁 ${recurrenceLabel}\n`;
       reply += '\n';
     });
     reply += `_You'll be reminded automatically!_`;

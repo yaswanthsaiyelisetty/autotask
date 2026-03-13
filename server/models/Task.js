@@ -31,6 +31,51 @@ const taskSchema = new mongoose.Schema(
       type: String, // For weekly: "Monday", "Tuesday", etc. For monthly: "1"-"31"
       default: null,
     },
+    recurrence: {
+      type: {
+        type: String,
+        enum: ['none', 'weekday', 'interval_days', 'monthly_nth_weekday'],
+        default: 'none',
+      },
+      interval: {
+        type: Number,
+        default: null,
+      },
+      weekOfMonth: {
+        type: Number,
+        default: null,
+      },
+      weekday: {
+        type: String,
+        default: null,
+      },
+      startDate: {
+        type: String,
+        default: null,
+      },
+      untilDate: {
+        type: String,
+        default: null,
+      },
+    },
+    exceptions: {
+      pauseUntil: {
+        type: String,
+        default: null,
+      },
+      skipWeekends: {
+        type: Boolean,
+        default: false,
+      },
+      skipHolidays: {
+        type: Boolean,
+        default: false,
+      },
+      holidayDates: {
+        type: [String],
+        default: [],
+      },
+    },
     priority: {
       type: String,
       enum: ['low', 'medium', 'high'],
@@ -62,5 +107,6 @@ const taskSchema = new mongoose.Schema(
 
 // Index for efficient scheduler queries
 taskSchema.index({ status: 1, time: 1, date: 1, reminderSent: 1 });
+taskSchema.index({ userId: 1, status: 1, time: 1 });
 
 module.exports = mongoose.model('Task', taskSchema);

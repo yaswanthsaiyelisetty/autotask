@@ -1,5 +1,9 @@
 const OpenAI = require('openai');
 const { DEFAULT_TIMEZONE, getDateTimeParts, resolveTimeZone } = require('../utils/dateTime');
+const {
+  normalizeRecurrenceInput,
+  normalizeExceptionsInput,
+} = require('./recurrenceService');
 
 const AI_PROVIDER = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
 const AI_MODEL =
@@ -114,13 +118,19 @@ function normalizeParsedTask(task, fallbackDate) {
     ? task.repeat
     : 'none';
 
+  const normalizedRecurrence = normalizeRecurrenceInput(task.recurrence, normalizedDate);
+  const normalizedExceptions = normalizeExceptionsInput(task.exceptions);
+  const effectiveRepeat = normalizedRecurrence.type === 'none' ? normalizedRepeat : 'none';
+
   return {
     task: taskName,
     date: normalizedDate,
     time: normalizedTime,
     priority: normalizedPriority,
-    repeat: normalizedRepeat,
-    repeatDay: normalizedRepeat === 'none' ? null : task.repeatDay || null,
+    repeat: effectiveRepeat,
+    repeatDay: effectiveRepeat === 'none' ? null : task.repeatDay || null,
+    recurrence: normalizedRecurrence,
+    exceptions: normalizedExceptions,
   };
 }
 
@@ -152,19 +162,30 @@ Extract tasks from the user's message and return valid JSON only. No explanation
 
 Rules:
 - Return an array of task objects.
-- Each object must have: task (string), date (YYYY-MM-DD or null), time (HH:mm 24-hour), priority ("low"|"medium"|"high").
-      - If the message is not clearly asking to create or update a task/reminder, return { "tasks": [] }.
-      - Greetings, acknowledgements, date corrections, and statements about what today's date is are not tasks.
-      - The task field must contain only the actionable activity, not date/time chatter or correction text.
+- Each object must have: task, date, time, priority, repeat, repeatDay, recurrence, exceptions.
+- If the message is not clearly asking to create or update a task/reminder, return { "tasks": [] }.
+- Greetings, acknowledgements, date corrections, and statements about what today's date is are not tasks.
+- The task field must contain only the actionable activity, not date/time chatter or correction text.
 - If the user says "tomorrow", calculate the actual date.
 - If the user says "every day", set repeat to "daily". For "every Monday" set repeat to "weekly" and repeatDay to "Monday". For "every month on 1st" set repeat to "monthly" and repeatDay to "1".
+- For "every weekday" set recurrence.type to "weekday".
+- For "every N days" set recurrence.type to "interval_days" and recurrence.interval to N (e.g. 3).
+- For "last Friday of every month" set recurrence.type to "monthly_nth_weekday", recurrence.weekOfMonth to -1, and recurrence.weekday to "Friday".
 - If no repeat is mentioned, set repeat to "none" and repeatDay to null.
+- If no advanced recurrence is mentioned, recurrence.type must be "none".
+- recurrence format:
+  { "type": "none|weekday|interval_days|monthly_nth_weekday", "interval": number|null, "weekOfMonth": number|null, "weekday": string|null, "startDate": "YYYY-MM-DD|null", "untilDate": "YYYY-MM-DD|null" }
+- exceptions format:
+  { "pauseUntil": "YYYY-MM-DD|null", "skipWeekends": boolean, "skipHolidays": boolean, "holidayDates": ["YYYY-MM-DD", ...] }
+- If user says "skip weekends" or "except weekends", set exceptions.skipWeekends = true.
+- If user says "except holidays", set exceptions.skipHolidays = true.
+- If user says "pause until <date>", set exceptions.pauseUntil to that date.
 - Detect urgency words (submit, deadline, urgent, important, exam) → high priority.
 - If no time is specified, default to "09:00".
 - If no date and not recurring, default date to today (${today}).
 
 Return ONLY this JSON format, nothing else:
-{ "tasks": [ { "task": "...", "date": "...", "time": "...", "priority": "...", "repeat": "...", "repeatDay": ... } ] }`,
+{ "tasks": [ { "task": "...", "date": "...", "time": "...", "priority": "...", "repeat": "...", "repeatDay": null, "recurrence": { "type": "none", "interval": null, "weekOfMonth": null, "weekday": null, "startDate": null, "untilDate": null }, "exceptions": { "pauseUntil": null, "skipWeekends": false, "skipHolidays": false, "holidayDates": [] } } ] }`,
       },
       {
         role: 'user',
