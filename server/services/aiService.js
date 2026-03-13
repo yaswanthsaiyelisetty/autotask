@@ -1,13 +1,27 @@
 const OpenAI = require('openai');
 const { DEFAULT_TIMEZONE, getDateTimeParts, resolveTimeZone } = require('../utils/dateTime');
 
-// NVIDIA AI (OpenAI-compatible endpoint)
-const client = new OpenAI({
-  apiKey: process.env.NVIDIA_API_KEY,
-  baseURL: 'https://integrate.api.nvidia.com/v1',
-});
+const AI_PROVIDER = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
+const AI_MODEL =
+  process.env.AI_MODEL ||
+  (AI_PROVIDER === 'gemini' ? 'gemini-2.5-flash' : 'qwen/qwen2.5-coder-32b-instruct');
 
-const AI_MODEL = 'qwen/qwen2.5-coder-32b-instruct';
+const clientConfig =
+  AI_PROVIDER === 'gemini'
+    ? {
+        apiKey: process.env.GEMINI_API_KEY,
+        baseURL:
+          process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      }
+    : {
+        apiKey: process.env.NVIDIA_API_KEY,
+        baseURL: process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1',
+      };
+
+// AI provider client (Gemini via OpenAI-compatible endpoint by default)
+const client = new OpenAI({
+  ...clientConfig,
+});
 
 const NON_TASK_PATTERNS = [
   /^(hi|hii|hiii|hello|hlo|hey)\b[\s!.?]*$/i,
@@ -129,6 +143,7 @@ async function parseTaskMessage(message, timeZone = DEFAULT_TIMEZONE) {
     top_p: 0.95,
     max_tokens: 4096,
     stream: false,
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
