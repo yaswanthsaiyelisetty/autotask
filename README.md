@@ -285,14 +285,6 @@ https://your-ngrok-url.ngrok-free.app/api/whatsapp/webhook
 - `Pay electricity bill every month on 1st at 9 AM`
 - `done`
 
-## Why This Project Stands Out
-
-- Clear separation between UI, API, integrations, and deployment assets
-- Practical cloud architecture rather than a localhost-only demo
-- Real messaging workflow using Twilio webhooks and outbound WhatsApp replies
-- Timezone-aware scheduling logic for reminder accuracy
-- Structure that is easy to extend for additional channels or automation features
-
 ## License
 
 MIT
